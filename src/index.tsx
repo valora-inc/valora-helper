@@ -2,6 +2,7 @@ import { ContractKitProvider } from '@celo-tools/use-contractkit';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
+import '@celo-tools/use-contractkit/lib/styles.css'; 
 import './index.css';
 
 ReactDOM.render(
