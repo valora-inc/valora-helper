@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "valora-helper"
+  },
+  "targets": {
+    "celo-mobile-mainnet": {
+      "hosting": {
+        "valora-helper": [
+          "valora-helper"
+        ]
+      }
+    }
+  }
+}
