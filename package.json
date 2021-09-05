@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@celo-tools/use-contractkit": "^1.1.0",
+    "@celo-tools/use-contractkit": "^1.2.0",
     "@celo/contractkit": "^1.2.4",
     "axios": "^0.21.1",
     "react": "^17.0.2",
@@ -25,7 +25,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "deploy": "yarn build && firebase deploy --only hosting"
   },
   "eslintConfig": {
     "extends": [
