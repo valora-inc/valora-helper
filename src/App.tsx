@@ -1,10 +1,12 @@
-import { useContractKit } from '@celo-tools/use-contractkit';
 import { toTransactionObject } from '@celo/connect';
+import { DappKitResponseStatus } from '@celo/utils';
 import { ContractKit, StableToken } from '@celo/contractkit';
 import { toRawTransaction } from '@celo/contractkit/lib/wrappers/MetaTransactionWallet';
 import axios from 'axios';
-import React, { useState } from 'react';
+import { connectToValora, makeTx } from './utils/dappkit';
+import React, { useEffect, useState } from 'react';
 import './App.css';
+import { getContractKit } from './utils/contractkit';
 
 async function fetchWalletAddressForAccount(kit: ContractKit, address: string) {
   const accounts = await kit.contracts.getAccounts();
@@ -37,12 +39,9 @@ async function rescueFundsFromMTW(
         batch.push(toRawTransaction(celo.transfer(walletAddress, celoBalance.toFixed()).txo))
   
         const wallet = await kit.contracts.getMetaTransactionWallet(metaTxWalletAddress)
-  
-        const tx = toTransactionObject(
-          kit.connection,
-          wallet.executeTransactions(batch).txo
-        )
-        const receipt = await tx.sendAndWaitForReceipt({ from: walletAddress })
+        const txo = wallet.executeTransactions(batch).txo
+
+        const receipt = await makeTx(address, txo, metaTxWalletAddress)
         txHashes.push(receipt.transactionHash)
       } catch (err) {
         console.error(err)
@@ -61,16 +60,45 @@ async function rescueFundsFromMTW(
 }
 
 function App() {
-  const { connect, performActions, address } = useContractKit();
+  const [address, setAddress] = useState('')
   const [txHashes, setTxHashes] = useState<string[]>([])
   const [error, setError] = useState<string | undefined>()
 
+  useEffect(() => {
+    // Close window if search params from Valora redirect are present (handles Valora connection issue)
+    if (typeof window !== 'undefined') {
+      const url = window.location.href
+      const whereQuery = url.indexOf('?')
+      if (whereQuery !== -1) {
+        const query = url.slice(whereQuery)
+        const params = new URLSearchParams(query)
+        if (params.get('status') === DappKitResponseStatus.SUCCESS) {
+          localStorage.setItem('valoraRedirect', window.location.href)
+          window.close()
+        }
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const storedAddress = localStorage.getItem('address')
+    if (storedAddress) {
+      setAddress(storedAddress)
+    }
+  }, [])
+
+  const connect = async () => {
+    const connectedAddress = await connectToValora()
+    localStorage.setItem('address', connectedAddress)
+    setAddress(connectedAddress)
+  }
+
+  
   async function onClickRecover() {
-    await performActions(async (kit) => {
-      const { txHashes, error } = await rescueFundsFromMTW(kit, address!)
-      setTxHashes(txHashes)
-      setError(error)
-    });
+    const kit = await getContractKit()
+    const { txHashes, error } = await rescueFundsFromMTW(kit, address!)
+    setTxHashes(txHashes)
+    setError(error)
   }
 
   return (
