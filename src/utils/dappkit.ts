@@ -70,11 +70,9 @@ async function requestTxSig(
   const baseNonce = await kit.connection.nonce(txParams[0].from)
   const txs: TxToSignParam[] = await Promise.all(
     txParams.map(async (txParam, index) => {
-      const feeCurrencyContractAddress = '0x765DE816845861e75A25fCA122bb6898B8B1282a'
       const value = txParam.value === undefined ? '0' : txParam.value
 
       const estimatedTxParams = {
-        feeCurrency: feeCurrencyContractAddress,
         from: txParam.from,
         value,
       } as any
@@ -87,7 +85,6 @@ async function requestTxSig(
         txData: txParam.tx.encodeABI(),
         estimatedGas,
         nonce: baseNonce + index,
-        feeCurrencyAddress: feeCurrencyContractAddress,
         value,
         ...txParam,
       }

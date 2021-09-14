@@ -23,6 +23,7 @@ async function rescueFundsFromMTW(
     const walletAddress = await fetchWalletAddressForAccount(kit, address)
     const response = await axios.get(`https://us-central1-celo-mobile-mainnet.cloudfunctions.net/fetchAccountsForWalletAddress?walletAddress=${walletAddress.toLowerCase()}`)
     const accountAddresses = response.data.filter((accountAddress: string) => accountAddress.toLowerCase() !== address);
+    let errorStr
     for (const metaTxWalletAddress of accountAddresses) {
       try {
         const batch: any[] = []
@@ -44,12 +45,12 @@ async function rescueFundsFromMTW(
         const receipt = await makeTx(address, txo, metaTxWalletAddress)
         txHashes.push(receipt.transactionHash)
       } catch (err) {
-        console.error(err)
+        errorStr = `${errorStr}\n${err}`
       }
     }
     return { 
       txHashes,
-      error: txHashes.length ? undefined : "Couldn't find any valid Meta Transaction Wallet for your address"
+      error: txHashes.length ? undefined : (errorStr ?? 'No MTW address found')
     }
   } catch (error) {
     return {
@@ -93,6 +94,11 @@ function App() {
     setAddress(connectedAddress)
   }
 
+  const disconnect = async () => {
+    localStorage.setItem('address', '')
+    setAddress('')
+  }
+
   
   async function onClickRecover() {
     const kit = await getContractKit()
@@ -112,6 +118,7 @@ function App() {
             </a>
           )}
           {error && <div>Error: {error}</div>}
+          <div onClick={disconnect} className="button-disconnect">Disconnect</div>
         </>
       ) : (
         <div onClick={connect} className="button">Connect to your wallet</div>
